@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expensify</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>EXPENSIFY</h1>
+           
+        </header>
+        <main>
+            <section class="account-section">
+                <button id="dark-mode-toggle">Switch to Dark Mode</button>
+                <button id="add-account-btn">Add a new account</button>
+                <button id="view-balance-btn">View Balance</button>
+                <input type="text" id="account-name" placeholder="Account Name" class="hidden">
+                <button id="add-account" class="hidden">Add Account</button>
+            </section>
+            <section class="income-section">
+                <h2>Add Income</h2>
+                <input type="number" id="income-amount" placeholder="Amount">
+                <input type="text" id="income-source" placeholder="Source">
+                <select id="income-account"></select>
+                <button id="add-income">Add Income</button>
+                <button id="view-income-history">View income history</button>
+            </section>
+            <section class="expense-section">
+                <h2>Add Expense</h2>
+                <input type="number" id="expense-amount" placeholder="Amount">
+                <input type="text" id="expense-source" placeholder="Source">
+                <select id="expense-account"></select>
+                <button id="add-expense">Add Expense</button>
+                <button id="view-expense-history">View Expense history</button>
+            </section>
+            <section class="transactions-section">
+                <h2>Recent Transactions</h2>
+                <div id="recent-transactions"></div>
+                <button id="view-all">View ALL</button>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
