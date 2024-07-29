@@ -1,131 +1,152 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const accountNameInput = document.getElementById('account-name');
-    const addAccountButton = document.getElementById('add-account');
-    const addAccountBtn = document.getElementById('add-account-btn');
-    const viewBalanceBtn = document.getElementById('view-balance-btn');
-    const incomeAmountInput = document.getElementById('income-amount');
-    const incomeSourceInput = document.getElementById('income-source');
-    const incomeAccountSelect = document.getElementById('income-account');
-    const addIncomeButton = document.getElementById('add-income');
-    const viewIncomeHistoryButton = document.getElementById('view-income-history');
-    const expenseAmountInput = document.getElementById('expense-amount');
-    const expenseSourceInput = document.getElementById('expense-source');
-    const expenseAccountSelect = document.getElementById('expense-account');
-    const addExpenseButton = document.getElementById('add-expense');
-    const viewExpenseHistoryButton = document.getElementById('view-expense-history');
-    const recentTransactionsDiv = document.getElementById('recent-transactions');
-    const viewAllButton = document.getElementById('view-all');
     const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const container = document.querySelector('.container');
+    const addAccountBtn = document.getElementById('add-account-btn');
+    const addAccountInput = document.getElementById('account-name');
+    const addAccount = document.getElementById('add-account');
+    const viewBalanceBtn = document.getElementById('view-balance-btn');
+    const incomeAccountSelect = document.getElementById('income-account');
+    const expenseAccountSelect = document.getElementById('expense-account');
+    const addIncomeBtn = document.getElementById('add-income');
+    const addExpenseBtn = document.getElementById('add-expense');
+    const recentTransactionsDiv = document.getElementById('recent-transactions');
+    const viewAllBtn = document.getElementById('view-all');
 
-    let incomes = JSON.parse(localStorage.getItem('incomes')) || [];
-    let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
-    let accounts = JSON.parse(localStorage.getItem('accounts')) || {};
-    let isDarkMode = JSON.parse(localStorage.getItem('isDarkMode')) || false;
-    let showingAllTransactions = false;
+    let accounts = JSON.parse(localStorage.getItem('accounts')) || [];
+    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+    let darkMode = JSON.parse(localStorage.getItem('darkMode')) || false;
 
-    if (isDarkMode) {
+    const saveData = () => {
+        localStorage.setItem('accounts', JSON.stringify(accounts));
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+        localStorage.setItem('darkMode', JSON.stringify(darkMode));
+    };
+
+    const updateAccountSelect = () => {
+        incomeAccountSelect.innerHTML = '';
+        expenseAccountSelect.innerHTML = '';
+        accounts.forEach(account => {
+            const option = document.createElement('option');
+            option.value = account.name;
+            option.textContent = account.name;
+            incomeAccountSelect.appendChild(option);
+            expenseAccountSelect.appendChild(option);
+        });
+    };
+
+    const updateRecentTransactions = () => {
+        recentTransactionsDiv.innerHTML = '';
+        const recentTransactions = transactions.slice(-3);
+        recentTransactions.forEach(transaction => {
+            const p = document.createElement('p');
+            p.textContent = `${transaction.type} ${transaction.amount} rupees to/from ${transaction.account}`;
+            recentTransactionsDiv.appendChild(p);
+        });
+        if (transactions.length > 3) {
+            viewAllBtn.classList.remove('hidden');
+        } else {
+            viewAllBtn.classList.add('hidden');
+        }
+    };
+
+    const updateBalances = () => {
+        let totalBalance = 0;
+        accounts.forEach(account => {
+            totalBalance += account.balance;
+        });
+
+        const balancesDiv = document.createElement('div');
+        balancesDiv.id = 'balances';
+        balancesDiv.innerHTML = `<p>Total Balance: ${totalBalance} rupees</p>`;
+        accounts.forEach(account => {
+            const p = document.createElement('p');
+            p.textContent = `${account.name} Balance: ${account.balance} rupees`;
+            balancesDiv.appendChild(p);
+        });
+
+        document.body.appendChild(balancesDiv);
+    };
+
+    const toggleDarkMode = () => {
+        darkMode = !darkMode;
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.textContent = 'Switch to Bright Mode';
+        } else {
+            document.body.classList.remove('dark-mode');
+            darkModeToggle.textContent = 'Switch to Dark Mode';
+        }
+        saveData();
+    };
+
+    darkModeToggle.addEventListener('click', toggleDarkMode);
+    if (darkMode) {
         document.body.classList.add('dark-mode');
         darkModeToggle.textContent = 'Switch to Bright Mode';
     } else {
+        document.body.classList.remove('dark-mode');
         darkModeToggle.textContent = 'Switch to Dark Mode';
     }
 
-    darkModeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        isDarkMode = !isDarkMode;
-        localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
-        darkModeToggle.textContent = isDarkMode ? 'Switch to Bright Mode' : 'Switch to Dark Mode';
-    });
-
     addAccountBtn.addEventListener('click', () => {
-        accountNameInput.classList.toggle('hidden');
-        addAccountButton.classList.toggle('hidden');
+        addAccountInput.classList.toggle('hidden');
+        addAccount.classList.toggle('hidden');
     });
 
-    addAccountButton.addEventListener('click', () => {
-        const accountName = accountNameInput.value.trim();
-        if (accountName && !accounts[accountName]) {
-            accounts[accountName] = 0;
-            updateAccountSelects();
-            accountNameInput.value = '';
+    addAccount.addEventListener('click', () => {
+        const accountName = addAccountInput.value.trim();
+        if (accountName !== '') {
+            accounts.push({ name: accountName, balance: 0 });
+            addAccountInput.value = '';
+            updateAccountSelect();
             saveData();
         }
     });
 
-    addIncomeButton.addEventListener('click', () => {
-        const amount = parseFloat(incomeAmountInput.value.trim());
-        const source = incomeSourceInput.value.trim();
-        const account = incomeAccountSelect.value;
-
-        if (!isNaN(amount) && amount > 0 && source && account) {
-            const income = { amount, source, account };
-            incomes.push(income);
-            accounts[account] += amount;
+    addIncomeBtn.addEventListener('click', () => {
+        const amount = parseFloat(document.getElementById('income-amount').value);
+        const source = document.getElementById('income-source').value.trim();
+        const accountName = incomeAccountSelect.value;
+        if (!isNaN(amount) && amount > 0 && source !== '' && accountName !== '') {
+            const account = accounts.find(acc => acc.name === accountName);
+            account.balance += amount;
+            transactions.push({ type: 'Income', amount, source, account: accountName });
             updateRecentTransactions();
-            incomeAmountInput.value = '';
-            incomeSourceInput.value = '';
             saveData();
         }
     });
 
-    addExpenseButton.addEventListener('click', () => {
-        const amount = parseFloat(expenseAmountInput.value.trim());
-        const source = expenseSourceInput.value.trim();
-        const account = expenseAccountSelect.value;
-
-        if (!isNaN(amount) && amount > 0 && source && account && accounts[account] >= amount) {
-            const expense = { amount, source, account };
-            expenses.push(expense);
-            accounts[account] -= amount;
+    addExpenseBtn.addEventListener('click', () => {
+        const amount = parseFloat(document.getElementById('expense-amount').value);
+        const source = document.getElementById('expense-source').value.trim();
+        const accountName = expenseAccountSelect.value;
+        if (!isNaN(amount) && amount > 0 && source !== '' && accountName !== '') {
+            const account = accounts.find(acc => acc.name === accountName);
+            account.balance -= amount;
+            transactions.push({ type: 'Expense', amount, source, account: accountName });
             updateRecentTransactions();
-            expenseAmountInput.value = '';
-            expenseSourceInput.value = '';
             saveData();
         }
     });
 
-    function updateAccountSelects() {
-        incomeAccountSelect.innerHTML = '';
-        expenseAccountSelect.innerHTML = '';
-        for (let account in accounts) {
-            const option = document.createElement('option');
-            option.value = account;
-            option.textContent = account;
-            incomeAccountSelect.appendChild(option.cloneNode(true));
-            expenseAccountSelect.appendChild(option);
+    viewBalanceBtn.addEventListener('click', () => {
+        const existingBalancesDiv = document.getElementById('balances');
+        if (existingBalancesDiv) {
+            existingBalancesDiv.remove();
         }
-    }
+        updateBalances();
+    });
 
-    function updateRecentTransactions() {
+    viewAllBtn.addEventListener('click', () => {
         recentTransactionsDiv.innerHTML = '';
-        const allTransactions = [...incomes, ...expenses].sort((a, b) => b.date - a.date);
-        const transactionsToShow = showingAllTransactions ? allTransactions : allTransactions.slice(0, 3);
-
-        transactionsToShow.forEach(transaction => {
-            const div = document.createElement('div');
-            if (transaction.amount > 0) {
-                div.textContent = `Income ${transaction.source} ${transaction.amount} rupees`;
-            } else {
-                div.textContent = `Expense ${transaction.source} ${-transaction.amount} rupees`;
-            }
-            recentTransactionsDiv.appendChild(div);
+        transactions.forEach(transaction => {
+            const p = document.createElement('p');
+            p.textContent = `${transaction.type} ${transaction.amount} rupees to/from ${transaction.account}`;
+            recentTransactionsDiv.appendChild(p);
         });
-
-        viewAllButton.textContent = showingAllTransactions ? 'Show Less' : 'View ALL';
-    }
-
-    viewAllButton.addEventListener('click', () => {
-        showingAllTransactions = !showingAllTransactions;
-        updateRecentTransactions();
     });
 
-    function saveData() {
-        localStorage.setItem('incomes', JSON.stringify(incomes));
-        localStorage.setItem('expenses', JSON.stringify(expenses));
-        localStorage.setItem('accounts', JSON.stringify(accounts));
-    }
-
-    updateAccountSelects();
+    updateAccountSelect();
     updateRecentTransactions();
+    saveData();
 });
+
